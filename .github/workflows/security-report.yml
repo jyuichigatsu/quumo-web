@@ -1,0 +1,39 @@
+name: "Security Report"
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # 毎週日曜日の午前0時に実行
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run npm audit
+        if: always()
+        run: |
+          cd frontend
+          npm audit --json > npm-audit.json
+          echo "NPM Audit Results:"
+          cat npm-audit.json
+
+      - name: Run pip audit
+        if: always()
+        run: |
+          cd backend
+          pip-audit --json > pip-audit.json
+          echo "PIP Audit Results:"
+          cat pip-audit.json
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            frontend/npm-audit.json
+            backend/pip-audit.json
+          retention-days: 7 
